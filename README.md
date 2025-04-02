@@ -55,7 +55,7 @@ Enable GitHub Pages:
 1. Open MSYS2 and install `make`:
    ```bash
    pacman -Syu
-   pacman -S make
+   pacman -S make zip
 ````
 
 2. In Git Bash, run the following script:
