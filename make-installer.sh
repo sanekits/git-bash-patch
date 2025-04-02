@@ -18,4 +18,4 @@ cp "$TMPDIR/make/"* "$TARGET" || { echo "Install failed"; exit 1; }
 echo "Cleaning up..."
 rm -rf "$TMPDIR"
 
-echo "Done. Test with: make --version"
+echo "Done: make installed to $TARGET"
