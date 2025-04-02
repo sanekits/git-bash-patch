@@ -3,7 +3,7 @@ set -ueo pipefail
 
 # Portable make installer for Git Bash
 ZIP_URL="https://sanekits.github.io/git-bash-patch/make-portable.zip"
-TARGET="/usr/bin"
+TARGET="${HOME}/.local/bin"
 TMPDIR=$(mktemp -d)
 
 echo "Downloading make-portable.zip..."
