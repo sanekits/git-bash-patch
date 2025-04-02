@@ -48,7 +48,7 @@ Enable GitHub Pages:
 ## 2. Build `make-portable.zip`
 
 ### Requirements:
-- MSYS2 installed in `C:\msys64`
+- MSYS2 installed in `C:\msys64` on a machine **not behind a corporate proxy or MITM firewall**, as the keyring setup may hang in such environments
 - Git Bash or any Bash shell
 
 ### Steps:
@@ -157,5 +157,4 @@ Use and adapt freely. This is a minimalist helper for patching Git Bash — no w
 ## Author
 
 **Stabledog** – [https://github.com/Stabledog](https://github.com/Stabledog)
-
 
