@@ -2,16 +2,17 @@
 
 ## Overview
 
-This guide walks you through setting up a portable version of `make` for Git Bash on Windows 10/11. It avoids full MSYS2 installation, works with Unix-style paths, and is easy to maintain or replicate using GitHub Pages.
+This guide sets up a portable version of `make` for Git Bash on Windows using a standalone MinGW-based `make.exe` build (from EzWinPorts).
+
+The `make` binary is distributed as a ZIP archive hosted on GitHub Pages, allowing for easy, scriptable installation on any Git Bash system.
 
 ---
 
 ## Goals
 
-- Add `make` to Git Bash (Unix-compatible)
-- No path conflicts or global environment changes
-- Scriptable, repeatable install process
-- Lightweight ZIP-based distribution
+- Add `make` to Git Bash 
+- Lightweight, portable ZIP-based distribution
+- Easy installation via script
 
 ---
 
@@ -36,43 +37,42 @@ Enable GitHub Pages:
 - Go to **Settings > Pages**
 - Set **Source** to `main` and folder to `/docs`
 - Save; your zip will be hosted at:
-  ```
-  ```
 
-[https://sanekits.github.io/git-bash-patch/make-portable.zip](https://sanekits.github.io/git-bash-patch/make-portable.zip)
-
-````
+```
+https://sanekits.github.io/git-bash-patch/make-portable.zip
+```
 
 ---
 
 ## 2. Build `make-portable.zip`
 
 ### Requirements:
-- MSYS2 installed in `C:\msys64` on a machine **not behind a corporate proxy or MITM firewall**, as the keyring setup may hang in such environments
-- Git Bash or any Bash shell
+
+- Download the standalone `make.exe` build:
+  - From: https://sourceforge.net/projects/ezwinports/files/
+  - Direct zip link (as of writing):
+    ```
+https://sourceforge.net/projects/ezwinports/files/make-4.3-without-guile-w32-bin.zip
+```
 
 ### Steps:
-1. Open MSYS2 and install `make`:
-   ```bash
-   pacman -Syu
-   pacman -S make zip
-````
 
-2. In Git Bash, run the following script:
+1. Download and extract `make.exe` from the above zip.
+2. Create a folder `make-portable` and move `make.exe` into it:
 
 ```bash
-#!/bin/bash
-set -ueo pipefail
-mkdir -p make-portable
-cp /c/msys64/usr/bin/make.exe make-portable/
-cp /c/msys64/usr/bin/msys-2.0.dll make-portable/
-cp /c/msys64/usr/bin/msys-iconv-2.dll make-portable/
-cp /c/msys64/usr/bin/msys-intl-8.dll make-portable/
+mkdir make-portable
+cp /path/to/make.exe make-portable/
+```
+
+3. Zip it:
+
+```bash
 cd make-portable
 zip ../docs/make-portable.zip *
 ```
 
-3. Commit and push:
+4. Commit and push:
 
 ```bash
 git add docs/make-portable.zip
@@ -87,27 +87,41 @@ git push
 In the root of your repo, create `make-installer.sh`:
 
 ```bash
-#!/bin/bash
+#!/usr/bin/env bash
 set -ueo pipefail
+
+# Check if we can write to /bin by creating a temporary file
+if ! touch /bin/.test-write-permission 2>/dev/null; then
+  echo "ERROR: You must run this script as Administrator to create /bin/make symlink."
+  echo "Right-click Git Bash and choose 'Run as Administrator', then re-run this script."
+  exit 1
+else
+  rm -f /bin/.test-write-permission
+fi
 
 # Portable make installer for Git Bash
 ZIP_URL="https://sanekits.github.io/git-bash-patch/make-portable.zip"
 TARGET="${HOME}/.local/bin"
 TMPDIR=$(mktemp -d)
 
+mkdir -p "$TARGET"
+
 echo "Downloading make-portable.zip..."
-curl -L "$ZIP_URL" -o "$TMPDIR/make.zip" || { echo "Download failed"; exit 1; }
+curl -L "$ZIP_URL" -o "$TMPDIR/make.zip"
 
 echo "Extracting..."
 unzip "$TMPDIR/make.zip" -d "$TMPDIR/make"
 
 echo "Installing to $TARGET..."
-cp "$TMPDIR/make/"* "$TARGET" || { echo "Install failed"; exit 1; }
+cp "$TMPDIR/make/make.exe" "$TARGET"
 
-echo "Cleaning up..."
 rm -rf "$TMPDIR"
 
-echo "Done. Test with: make --version"
+echo "Creating symlink at /bin/make..."
+mkdir -p /bin
+ln -sf "$HOME/.local/bin/make" /bin/make
+
+echo "Done. You may need to add \$HOME/.local/bin to your PATH. Test with: make --version"
 ```
 
 Make it executable and commit:
@@ -130,21 +144,25 @@ curl -LO https://raw.githubusercontent.com/sanekits/git-bash-patch/main/make-ins
 bash make-installer.sh
 ```
 
-You now have a Unix-style `make` installed in Git Bash, with no extra packages or global changes.
+You now have a working `make` in Git Bash, with no runtime dependencies or special shell path assumptions.
 
 ---
 
 ## Bonus: Rebuilding the ZIP Later
 
-If MSYS2 updates or you want to rebuild `make-portable.zip`, rerun the script in Step 2. You can automate this via CI/CD if desired.
+If a newer version of `make.exe` is released by EzWinPorts or another trusted MinGW source, you can repeat Step 2 to rebuild the zip.
 
 ---
 
 ## Notes
 
-- `make.exe` and DLLs come from MSYS2 and use POSIX path conventions
-- Safe to use in Git Bash scripts, Makefiles, etc.
-- GitHub Pages allows serving `.zip` files directly
+- The EzWinPorts version of `make.exe` used here is a 32-bit executable. Despite the architecture, it works reliably in Git Bash and is currently the best lightweight option for this use case.
+
+
+- This setup creates a symlink at `/bin/make` pointing to the user's `$HOME/.local/bin/make`, ensuring that `make` can invoke shell scripts that expect `/bin/bash`.
+- It avoids modifying Makefiles or relying on MSYS2's complex shell path resolution.
+- The included `make.exe` uses native Windows system calls and does not rely on `msys-2.0.dll`.
+- The installer places `make` in `$HOME/.local/bin`, requiring no administrative privileges for normal usage, except for creating the symlink at `/bin/make`.
 
 ---
 

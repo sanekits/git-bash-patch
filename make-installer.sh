@@ -29,8 +29,8 @@ cp "$TMPDIR/make/"* "$TARGET" || { echo "Install failed"; exit 1; }
 
 rm -rf "$TMPDIR"
 
-echo "Creating symlink at /bin/bash..."
+echo "Creating symlink at /bin ..."
 mkdir -p /bin
-ln -sf "$HOME/.local/bin/bash" /bin/bash
+ln -sf "$HOME/.local/bin/make.exe" /bin/make
 
 echo "Done. You may need to add \$HOME/.local/bin to your PATH. Test with: exec bash; make --version"
